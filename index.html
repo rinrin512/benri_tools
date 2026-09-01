@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>yaa-site | 便利ツール</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="image-cropper.js" defer></script>
+  <script src="image-color-picker.js" defer></script>
+  <script src="image-composer.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">YAA-SITE TOOLS</p>
+        <h1>便利ツール</h1>
+        <p class="lead">必要な機能を選んで、ブラウザ内で手軽に使えます。</p>
+      </div>
+      <div class="header-actions">
+        <button class="secondary-button home-button" id="homeButton" type="button" hidden>ホームに戻る</button>
+        <div class="privacy-note" aria-label="プライバシー情報">🔒 データはこのブラウザ内で処理</div>
+      </div>
+    </header>
+
+    <section class="home-view" id="homeView" aria-labelledby="homeTitle">
+      <div class="home-intro">
+        <p class="eyebrow">TOOLS</p>
+        <h2 id="homeTitle">使う機能を選択</h2>
+        <p>各ボタンから専用画面を開けます。</p>
+      </div>
+      <div class="tool-grid">
+        <button class="tool-card" id="openPrintButton" type="button">
+          <span class="tool-icon" aria-hidden="true">▣</span>
+          <span class="tool-card-title">実寸画像印刷</span>
+          <span class="tool-card-description">画像をmm単位で配置し、正確なサイズのPDFを作成</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openCharacterCountButton" type="button">
+          <span class="tool-icon character-icon" aria-hidden="true">T</span>
+          <span class="tool-card-title">文字数カウント</span>
+          <span class="tool-card-description">文章を入力して、文字数・行数・バイト数をリアルタイム集計</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openCursiveButton" type="button">
+          <span class="tool-icon cursive-icon" aria-hidden="true">𝒜</span>
+          <span class="tool-card-title">英語筆記体変換</span>
+          <span class="tool-card-description">英語の大文字・小文字をUnicodeの筆記体文字へ自動変換</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openConverterButton" type="button">
+          <span class="tool-icon converter-icon" aria-hidden="true">⇄</span>
+          <span class="tool-card-title">ファイル形式変換</span>
+          <span class="tool-card-description">画像やテキストをブラウザ内で別の形式へ変換</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openCropperButton" type="button">
+          <span class="tool-icon cropper-icon" aria-hidden="true">⌗</span>
+          <span class="tool-card-title">画像トリミング</span>
+          <span class="tool-card-description">画像上で範囲を選択し、指定した比率・形式で切り抜き</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openColorPickerButton" type="button">
+          <span class="tool-icon color-picker-icon" aria-hidden="true">●</span>
+          <span class="tool-card-title">画像カラー抽出</span>
+          <span class="tool-card-description">画像の特定位置から色を取得し、HEXカラーコードをコピー</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openComposerButton" type="button">
+          <span class="tool-icon composer-icon" aria-hidden="true">▧</span>
+          <span class="tool-card-title">画像合成・編集</span>
+          <span class="tool-card-description">複数画像をレイヤーとして重ね、配置や透明度を編集して保存</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="feature-view" id="printFeatureView" aria-labelledby="printFeatureTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">ACTUAL SIZE PRINT</p>
+          <h2 id="printFeatureTitle">画像を指定した実寸サイズで印刷</h2>
+          <p>幅・高さ・位置をmmで指定し、A判・B判の用紙へ配置したPDFを作成します。</p>
+        </div>
+      </div>
+    <div class="workspace">
+      <aside class="control-panel" aria-label="印刷設定">
+        <section class="panel-section">
+          <h2>1. 画像を追加</h2>
+          <label class="drop-zone" id="dropZone" for="fileInput">
+            <span class="drop-icon" aria-hidden="true">＋</span>
+            <span><strong>クリックまたはドロップ</strong><br>PNG / JPG / WebP</span>
+            <input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+          </label>
+          <p class="helper-text" id="fileStatus">画像を追加すると、ここに一覧が表示されます。</p>
+          <div class="image-list" id="imageList" aria-label="配置画像一覧"></div>
+        </section>
+
+        <section class="panel-section">
+          <h2>2. 用紙</h2>
+          <div class="form-grid two-column">
+            <label>用紙
+              <select id="paperSize">
+                <option value="a4">A4（210 × 297 mm）</option>
+                <option value="a3">A3（297 × 420 mm）</option>
+                <option value="b5">B5（182 × 257 mm）</option>
+                <option value="postcard">はがき（100 × 148 mm）</option>
+              </select>
+            </label>
+            <label>向き
+              <select id="orientation">
+                <option value="portrait">縦</option>
+                <option value="landscape">横</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel-section correction-section">
+          <h2>プリンター実寸補正</h2>
+          <p class="helper-text correction-intro">テスト印刷の「指定した長さ」と「実際に測った長さ」から、印刷時の補正倍率を計算します。</p>
+          <div class="form-grid two-column">
+            <label>指定した長さ（mm）
+              <input id="correctionSpecifiedInput" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="100">
+            </label>
+            <label>実測した長さ（mm）
+              <input id="correctionMeasuredInput" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="95">
+            </label>
+          </div>
+          <label class="checkbox-row">
+            <input id="correctionEnabled" type="checkbox">
+            <span>プリンター実寸補正を有効にする</span>
+          </label>
+          <p class="correction-result" id="correctionResult">補正倍率：1.000000倍（補正なし）</p>
+          <p class="correction-error" id="correctionError" role="alert" hidden></p>
+          <p class="helper-text">例：指定100mm、実測95mm → 100 ÷ 95 = 1.052631…倍</p>
+          <p class="print-warning">印刷時はブラウザ・プリンター側の倍率を100% / 「実際のサイズ」にしてください。「用紙に合わせる」等の自動縮小はOFFを推奨します。</p>
+        </section>
+
+        <section class="panel-section" id="imageSettings" aria-labelledby="imageSettingsTitle">
+          <h2 id="imageSettingsTitle">3. 選択画像の設定</h2>
+          <p class="empty-state" id="noSelection">画像を追加して選択してください。</p>
+          <div id="selectedControls" hidden>
+            <p class="selected-name" id="selectedName"></p>
+            <p class="effective-size" id="effectiveSize"></p>
+            <div class="form-grid two-column">
+              <label>幅（mm）
+                <input id="widthInput" type="number" min="0.1" max="2000" step="0.01" inputmode="decimal">
+              </label>
+              <label>高さ（mm）
+                <input id="heightInput" type="number" min="0.1" max="2000" step="0.01" inputmode="decimal">
+              </label>
+            </div>
+            <label class="checkbox-row">
+              <input id="lockAspect" type="checkbox" checked>
+              <span>縦横比を固定（推奨）</span>
+            </label>
+            <div class="form-grid two-column">
+              <label>X座標（mm）
+                <input id="xInput" type="number" step="0.01" inputmode="decimal">
+              </label>
+              <label>Y座標（mm）
+                <input id="yInput" type="number" step="0.01" inputmode="decimal">
+              </label>
+            </div>
+            <label>配置位置
+              <select id="positionSelect">
+                <option value="custom">自由配置（現在位置）</option>
+                <option value="top-left">左上</option>
+                <option value="top-center">上中央</option>
+                <option value="top-right">右上</option>
+                <option value="center-left">左中央</option>
+                <option value="center">中央</option>
+                <option value="center-right">右中央</option>
+                <option value="bottom-left">左下</option>
+                <option value="bottom-center">下中央</option>
+                <option value="bottom-right">右下</option>
+              </select>
+            </label>
+            <div class="button-row">
+              <button class="secondary-button" id="applyPositionButton" type="button">配置位置を適用</button>
+              <button class="secondary-button" id="duplicateButton" type="button">複製</button>
+              <button class="danger-button" id="deleteButton" type="button">削除</button>
+            </div>
+            <div class="copy-row">
+              <label>コピー枚数（合計）
+                <input id="copyCount" type="number" min="1" max="100" step="1" value="2" inputmode="numeric">
+              </label>
+              <button class="secondary-button" id="addCopiesButton" type="button">コピーを追加</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>4. 整列と出力</h2>
+          <button class="secondary-button full-width" id="autoArrangeButton" type="button">すべての画像を自動整列</button>
+          <button class="primary-button full-width" id="downloadButton" type="button" disabled>PDFを生成してダウンロード</button>
+          <p class="helper-text">PDFの画像サイズと位置は、プレビューのpx値ではなくmm値から計算されます。</p>
+        </section>
+      </aside>
+
+      <section class="preview-panel" aria-label="印刷プレビュー">
+        <div class="preview-heading">
+          <div>
+            <h2>プレビュー</h2>
+            <p id="paperSummary">A4・縦 — 210 × 297 mm</p>
+          </div>
+          <span class="scale-note">表示は縮尺です</span>
+        </div>
+        <div class="warning" id="overflowWarning" role="alert" hidden></div>
+        <div class="preview-viewport">
+          <div class="preview-paper" id="previewPaper" aria-label="用紙プレビュー"></div>
+        </div>
+        <p class="preview-help">画像をドラッグして自由に配置できます。座標入力で0.01mm単位の位置指定も可能です。</p>
+        <p class="status-message" id="statusMessage" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+    </section>
+
+    <section class="character-count-view" id="characterCountView" aria-labelledby="characterCountTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">CHARACTER COUNT</p>
+          <h2 id="characterCountTitle">文字数カウント</h2>
+          <p>文章を入力すると、各項目をリアルタイムで集計します。</p>
+        </div>
+      </div>
+      <div class="counter-layout">
+        <label class="counter-input-label" for="characterText">カウントする文章
+          <textarea id="characterText" rows="14" placeholder="ここに文章を入力してください。"></textarea>
+        </label>
+        <div class="counter-results" aria-live="polite">
+          <div class="count-card"><span>文字数（空白含む）</span><strong id="countAll">0</strong></div>
+          <div class="count-card"><span>文字数（空白除く）</span><strong id="countNoSpace">0</strong></div>
+          <div class="count-card"><span>行数</span><strong id="countLines">0</strong></div>
+          <div class="count-card"><span>UTF-8バイト数</span><strong id="countBytes">0</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cursive-view" id="cursiveView" aria-labelledby="cursiveTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">ENGLISH CURSIVE</p>
+          <h2 id="cursiveTitle">英語筆記体変換</h2>
+          <p>英語の大文字・小文字をUnicodeの Mathematical Script 文字へ変換します。</p>
+        </div>
+      </div>
+      <div class="cursive-layout">
+        <label for="cursiveInput">変換前
+          <textarea id="cursiveInput" rows="10" placeholder="Write English text here..."></textarea>
+        </label>
+        <div class="conversion-arrow" aria-hidden="true">→</div>
+        <label for="cursiveOutput">変換後（Unicode）
+          <textarea id="cursiveOutput" rows="10" readonly></textarea>
+        </label>
+      </div>
+      <div class="cursive-actions">
+        <p class="helper-text">英字以外の文字は変更されません。表示には筆記体対応フォントが必要です。</p>
+        <button class="secondary-button" id="copyCursiveButton" type="button">変換結果をコピー</button>
+      </div>
+    </section>
+
+    <section class="converter-view" id="converterView" aria-labelledby="converterTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">FILE CONVERTER</p>
+          <h2 id="converterTitle">ファイル形式変換</h2>
+          <p>ファイルを選び、変換先の形式を指定してダウンロードします。</p>
+        </div>
+      </div>
+      <div class="converter-layout">
+        <label class="converter-drop-zone" id="converterDropZone" for="converterFileInput">
+          <span class="drop-icon" aria-hidden="true">＋</span>
+          <span><strong>ファイルを選択またはドロップ</strong><br>画像 / テキスト</span>
+          <input id="converterFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.txt,.csv,.json,.md,.html">
+        </label>
+        <div class="converter-settings">
+          <p class="selected-name" id="converterFileName">ファイル未選択</p>
+          <p class="helper-text" id="converterFileMeta">対応形式：画像（PNG / JPG / WebP / SVG）、テキスト（TXT / CSV / JSON / MD / HTML）</p>
+          <label>変換先
+            <select id="converterOutputFormat" disabled></select>
+          </label>
+          <button class="primary-button full-width" id="converterDownloadButton" type="button" disabled>変換してダウンロード</button>
+          <p class="helper-text">画像はCanvasで変換します。テキストはTXT・HTML・JSONへ変換できます。</p>
+        </div>
+      </div>
+      <p class="status-message" id="converterStatus" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="cropper-view" id="cropperView" aria-labelledby="cropperTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">IMAGE CROPPER</p>
+          <h2 id="cropperTitle">画像トリミング</h2>
+          <p>画像上をドラッグして切り抜く範囲を選択し、別ファイルとして保存します。</p>
+        </div>
+      </div>
+      <div class="cropper-layout">
+        <aside class="cropper-controls" aria-label="トリミング設定">
+          <label class="cropper-drop-zone" id="cropperDropZone" for="cropperFileInput">
+            <span class="drop-icon" aria-hidden="true">＋</span>
+            <span><strong>画像を選択またはドロップ</strong><br>PNG / JPG / WebP</span>
+            <input id="cropperFileInput" type="file" accept="image/png,image/jpeg,image/webp">
+          </label>
+          <div id="cropperSettings" hidden>
+            <p class="selected-name" id="cropperFileName"></p>
+            <label>選択比率
+              <select id="cropperAspectRatio">
+                <option value="free">自由</option>
+                <option value="1">1 : 1</option>
+                <option value="1.3333333333333333">4 : 3</option>
+                <option value="1.5">3 : 2</option>
+                <option value="1.7777777777777777">16 : 9</option>
+                <option value="0.75">3 : 4</option>
+              </select>
+            </label>
+            <div class="form-grid two-column cropper-coordinate-grid">
+              <label>X（px）<input id="cropperX" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>Y（px）<input id="cropperY" type="number" min="0" step="1" inputmode="numeric"></label>
+              <label>幅（px）<input id="cropperWidth" type="number" min="1" step="1" inputmode="numeric"></label>
+              <label>高さ（px）<input id="cropperHeight" type="number" min="1" step="1" inputmode="numeric"></label>
+            </div>
+            <button class="secondary-button full-width" id="cropperResetButton" type="button">画像全体を選択</button>
+            <label>保存形式
+              <select id="cropperOutputFormat">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </label>
+            <label class="cropper-quality-row" id="cropperQualityRow" hidden>画質 <span id="cropperQualityValue">92%</span>
+              <input id="cropperQuality" type="range" min="10" max="100" step="1" value="92">
+            </label>
+            <button class="primary-button full-width" id="cropperDownloadButton" type="button">トリミングしてダウンロード</button>
+          </div>
+        </aside>
+        <div class="cropper-editor">
+          <div class="cropper-placeholder" id="cropperPlaceholder">画像を追加すると編集画面が表示されます。</div>
+          <canvas id="cropperCanvas" aria-label="画像トリミング編集画面" hidden></canvas>
+          <p class="helper-text">画像上をドラッグして範囲を選択できます。数値入力は元画像のピクセル単位です。</p>
+        </div>
+      </div>
+      <p class="status-message" id="cropperStatus" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="color-picker-view" id="colorPickerView" aria-labelledby="colorPickerTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">IMAGE COLOR PICKER</p>
+          <h2 id="colorPickerTitle">画像から色を抽出</h2>
+          <p>画像上の調べたい部分をクリックして、ピクセルの色とHEXカラーコードを取得します。</p>
+        </div>
+      </div>
+      <div class="color-picker-layout">
+        <aside class="color-picker-controls" aria-label="カラー抽出設定">
+          <label class="color-picker-drop-zone" id="colorPickerDropZone" for="colorPickerFileInput">
+            <span class="drop-icon" aria-hidden="true">＋</span>
+            <span><strong>画像を選択またはドロップ</strong><br>PNG / JPG / WebP</span>
+            <input id="colorPickerFileInput" type="file" accept="image/png,image/jpeg,image/webp">
+          </label>
+          <div class="color-result" id="colorPickerResult" hidden>
+            <p class="selected-name" id="colorPickerFileName"></p>
+            <div class="color-result-row">
+              <span class="color-swatch" id="colorPickerSwatch" aria-label="選択色"></span>
+              <label>HEXカラーコード
+                <input id="colorPickerHex" type="text" value="#000000" readonly>
+              </label>
+            </div>
+            <p class="color-details" id="colorPickerDetails">画像をクリックして色を選択してください。</p>
+            <button class="primary-button full-width" id="copyColorButton" type="button" disabled>HEXをコピー</button>
+            <div>
+              <div class="history-header">
+                <p class="history-title">最近選んだ色</p>
+                <button class="history-clear-button" id="clearColorHistoryButton" type="button" disabled>履歴を消去</button>
+              </div>
+              <div class="color-history" id="colorPickerHistory"></div>
+            </div>
+          </div>
+        </aside>
+        <div class="color-picker-editor">
+          <div class="color-picker-placeholder" id="colorPickerPlaceholder">画像を追加すると、色を選択できる画面が表示されます。</div>
+          <canvas id="colorPickerCanvas" aria-label="色を抽出する画像" hidden></canvas>
+          <canvas id="colorPickerMagnifier" width="120" height="120" aria-hidden="true" hidden></canvas>
+          <p class="helper-text">クリックまたは指で触れた位置の色を取得します。ドラッグしながら色を探すこともできます。</p>
+        </div>
+      </div>
+      <p class="status-message" id="colorPickerStatus" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="composer-view" id="composerView" aria-labelledby="composerTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">IMAGE COMPOSER</p>
+          <h2 id="composerTitle">画像合成・レイヤー編集</h2>
+          <p>複数画像を重ね、位置・大きさ・回転・透明度・重なり順を編集して保存します。</p>
+        </div>
+      </div>
+      <div class="composer-layout">
+        <aside class="composer-controls" aria-label="画像合成設定">
+          <label class="composer-drop-zone" id="composerDropZone" for="composerFileInput">
+            <span class="drop-icon" aria-hidden="true">＋</span>
+            <span><strong>複数画像を選択またはドロップ</strong><br>PNG / JPG / WebP</span>
+            <input id="composerFileInput" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+          </label>
+
+          <div class="composer-panel-group">
+            <h3>キャンバス</h3>
+            <div class="form-grid two-column">
+              <label>幅（px）<input id="composerCanvasWidth" type="number" min="1" max="8000" step="1" value="1200"></label>
+              <label>高さ（px）<input id="composerCanvasHeight" type="number" min="1" max="8000" step="1" value="800"></label>
+            </div>
+            <label class="checkbox-row"><input id="composerTransparent" type="checkbox" checked><span>背景を透明にする</span></label>
+            <label id="composerBackgroundRow">背景色<input id="composerBackgroundColor" type="color" value="#FFFFFF"></label>
+            <button class="secondary-button full-width" id="composerApplyCanvasButton" type="button">キャンバスサイズを適用</button>
+          </div>
+
+          <div class="composer-history-buttons">
+            <button class="secondary-button" id="composerUndoButton" type="button" disabled>元に戻す</button>
+            <button class="secondary-button" id="composerRedoButton" type="button" disabled>やり直す</button>
+          </div>
+
+          <div class="composer-panel-group">
+            <h3>レイヤー</h3>
+            <div class="composer-layer-list" id="composerLayerList"></div>
+            <p class="empty-state" id="composerNoSelection">画像を追加して選択してください。</p>
+            <div id="composerSelectedControls" hidden>
+              <p class="selected-name" id="composerSelectedName"></p>
+              <div class="form-grid two-column">
+                <label>X（px）<input id="composerX" type="number" step="1"></label>
+                <label>Y（px）<input id="composerY" type="number" step="1"></label>
+                <label>幅（px）<input id="composerWidth" type="number" min="1" step="1"></label>
+                <label>高さ（px）<input id="composerHeight" type="number" min="1" step="1"></label>
+              </div>
+              <label class="checkbox-row"><input id="composerLockAspect" type="checkbox" checked><span>縦横比を固定</span></label>
+              <label>回転 <span id="composerRotationValue">0°</span>
+                <input id="composerRotation" type="range" min="-180" max="180" step="1" value="0">
+              </label>
+              <label>透明度 <span id="composerOpacityValue">100%</span>
+                <input id="composerOpacity" type="range" min="0" max="100" step="1" value="100">
+              </label>
+              <div class="composer-action-grid">
+                <button class="secondary-button" id="composerCenterButton" type="button">中央</button>
+                <button class="secondary-button" id="composerDuplicateButton" type="button">複製</button>
+                <button class="secondary-button" id="composerForwardButton" type="button">前面へ</button>
+                <button class="secondary-button" id="composerBackwardButton" type="button">背面へ</button>
+                <button class="danger-button" id="composerDeleteButton" type="button">削除</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="composer-panel-group">
+            <h3>書き出し</h3>
+            <label>保存形式
+              <select id="composerOutputFormat"><option value="png">PNG</option><option value="jpeg">JPG</option><option value="webp">WebP</option></select>
+            </label>
+            <label id="composerQualityRow" hidden>画質 <span id="composerQualityValue">92%</span>
+              <input id="composerQuality" type="range" min="10" max="100" step="1" value="92">
+            </label>
+            <button class="primary-button full-width" id="composerDownloadButton" type="button" disabled>合成画像をダウンロード</button>
+          </div>
+        </aside>
+
+        <div class="composer-editor">
+          <div class="composer-placeholder" id="composerPlaceholder">複数画像を追加すると編集を開始できます。</div>
+          <canvas id="composerCanvas" width="1200" height="800" aria-label="画像合成編集キャンバス"></canvas>
+          <p class="helper-text">画像をドラッグして移動できます。右下の四角をドラッグするとサイズ変更できます。Deleteキーで選択画像を削除できます。</p>
+        </div>
+      </div>
+      <p class="status-message" id="composerStatus" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+</body>
+</html>

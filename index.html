@@ -6,32 +6,77 @@
   <title>yaa-site | 便利ツール</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="site-data-manager.js" defer></script>
+  <script src="i18n.js" defer></script>
   <script src="image-cropper.js" defer></script>
   <script src="image-color-picker.js" defer></script>
   <script src="image-composer.js" defer></script>
+  <script src="neon-text-generator.js" defer></script>
+  <script src="holiday-countdown.js" defer></script>
+  <script src="wake-time-randomizer.js" defer></script>
+  <script src="md5-generator.js" defer></script>
+  <script src="notepad.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
   <main class="app-shell">
     <header class="app-header">
       <div>
-        <p class="eyebrow">YAA-SITE TOOLS</p>
+        <p class="eyebrow">BENRI TOOLS</p>
         <h1>便利ツール</h1>
         <p class="lead">必要な機能を選んで、ブラウザ内で手軽に使えます。</p>
       </div>
       <div class="header-actions">
         <button class="secondary-button home-button" id="homeButton" type="button" hidden>ホームに戻る</button>
+        <button class="secondary-button settings-header-button" id="openSettingsButton" type="button" aria-label="設定" title="設定">⚙</button>
         <div class="privacy-note" aria-label="プライバシー情報">🔒 データはこのブラウザ内で処理</div>
       </div>
     </header>
 
     <section class="home-view" id="homeView" aria-labelledby="homeTitle">
-      <div class="home-intro">
+      <div class="home-intro" id="homeIntro">
         <p class="eyebrow">TOOLS</p>
         <h2 id="homeTitle">使う機能を選択</h2>
         <p>各ボタンから専用画面を開けます。</p>
       </div>
-      <div class="tool-grid">
+      <div class="category-selector" id="categorySelector" aria-label="機能カテゴリ">
+        <button class="category-button" id="showLifeCategoryButton" type="button">生活機能</button>
+        <button class="category-button" id="showProductivityCategoryButton" type="button">効率化機能</button>
+      </div>
+      <section class="tool-category" id="lifeCategory" aria-labelledby="lifeCategoryTitle" hidden>
+      <p class="eyebrow">LIFE SUPPORT</p>
+      <h2 class="tool-category-title" id="lifeCategoryTitle">生活機能</h2>
+      <div class="tool-grid tool-category-grid">
+        <button class="tool-card" id="openWakeTimeButton" type="button">
+          <span class="tool-icon wake-time-icon" aria-hidden="true">☀</span>
+          <span class="tool-card-title">明日の起床時間</span>
+          <span class="tool-card-description">起床時間の範囲からランダムに明日の時間を決定</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openHolidayCountdownButton" type="button">
+          <span class="tool-icon holiday-icon" aria-hidden="true">▣</span>
+          <span class="tool-card-title">次の連休カウントダウン</span>
+          <span class="tool-card-description">次の3連休以上の連休までの日数と期間を表示</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openNeonTextButton" type="button">
+          <span class="tool-icon neon-text-icon" aria-hidden="true">N</span>
+          <span class="tool-card-title">ネオン文字生成</span>
+          <span class="tool-card-description">発光文字や看板をデザインし、画像・SVG・動画で保存</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openCursiveLifeButton" type="button">
+          <span class="tool-icon cursive-icon" aria-hidden="true">𝒜</span>
+          <span class="tool-card-title">英語筆記体変換</span>
+          <span class="tool-card-description">英語を筆記体へ変換（生活）</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+      </div>
+      </section>
+      <section class="tool-category" id="productivityCategory" aria-labelledby="productivityCategoryTitle" hidden>
+      <p class="eyebrow">PRODUCTIVITY TOOLS</p>
+      <h2 class="tool-category-title" id="productivityCategoryTitle">効率化機能</h2>
+      <div class="tool-grid tool-category-grid">
         <button class="tool-card" id="openPrintButton" type="button">
           <span class="tool-icon" aria-hidden="true">▣</span>
           <span class="tool-card-title">実寸画像印刷</span>
@@ -74,7 +119,20 @@
           <span class="tool-card-description">複数画像をレイヤーとして重ね、配置や透明度を編集して保存</span>
           <span class="tool-card-link">開く →</span>
         </button>
+        <button class="tool-card" id="openMd5Button" type="button">
+          <span class="tool-icon md5-icon" aria-hidden="true">#</span>
+          <span class="tool-card-title">MD5ハッシュ生成</span>
+          <span class="tool-card-description">文字列やファイルからMD5ハッシュ値をブラウザ内で生成</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
+        <button class="tool-card" id="openNotepadButton" type="button">
+          <span class="tool-icon notepad-icon" aria-hidden="true">✎</span>
+          <span class="tool-card-title">メモ帳</span>
+          <span class="tool-card-description">文章を入力してブラウザへ自動保存し、いつでも続きを編集</span>
+          <span class="tool-card-link">開く →</span>
+        </button>
       </div>
+      </section>
     </section>
 
     <section class="feature-view" id="printFeatureView" aria-labelledby="printFeatureTitle" hidden>
@@ -217,6 +275,73 @@
         <p class="status-message" id="statusMessage" role="status" aria-live="polite"></p>
       </section>
     </div>
+    </section>
+
+    <section class="md5-view" id="md5View" aria-labelledby="md5Title" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">MD5 HASH GENERATOR</p>
+          <h2 id="md5Title">MD5ハッシュ生成</h2>
+          <p>文字列またはファイルからMD5ハッシュ値を生成します。入力データは外部へ送信されません。</p>
+        </div>
+      </div>
+      <div class="md5-layout">
+        <section class="md5-card">
+          <h3>文字列から生成</h3>
+          <label for="md5TextInput">ハッシュ化する文字列
+            <textarea id="md5TextInput" rows="8" placeholder="ここに文字列を入力してください。"></textarea>
+          </label>
+          <button class="primary-button" id="generateTextMd5Button" type="button">MD5を生成</button>
+        </section>
+        <section class="md5-card">
+          <h3>ファイルから生成</h3>
+          <label class="md5-drop-zone" id="md5DropZone" for="md5FileInput">
+            <span class="drop-icon" aria-hidden="true">＋</span>
+            <span><strong>ファイルを選択またはドロップ</strong><br>すべてのファイル形式に対応</span>
+            <input id="md5FileInput" type="file">
+          </label>
+          <p class="selected-name" id="md5FileName">ファイル未選択</p>
+          <button class="primary-button" id="generateFileMd5Button" type="button" disabled>MD5を生成</button>
+        </section>
+      </div>
+      <section class="md5-result-card" aria-live="polite">
+        <label for="md5Result">MD5ハッシュ値
+          <input id="md5Result" type="text" readonly placeholder="32文字のハッシュ値がここに表示されます">
+        </label>
+        <div class="button-row">
+          <button class="secondary-button" id="copyMd5Button" type="button" disabled>コピー</button>
+          <button class="secondary-button" id="clearMd5Button" type="button">クリア</button>
+        </div>
+        <p class="status-message" id="md5Status" role="status" aria-live="polite"></p>
+      </section>
+      <p class="md5-warning">MD5は改ざん耐性が弱いため、パスワード保存やセキュリティ用途には使用しないでください。</p>
+    </section>
+
+    <section class="notepad-view" id="notepadView" aria-labelledby="notepadTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">NOTEPAD</p>
+          <h2 id="notepadTitle">メモ帳</h2>
+          <p>入力内容はこのブラウザへ自動保存され、次回も続きから編集できます。</p>
+        </div>
+      </div>
+      <div class="notepad-layout">
+        <label for="notepadDocumentTitle">タイトル
+          <input id="notepadDocumentTitle" type="text" maxlength="100" placeholder="無題のメモ">
+        </label>
+        <label for="notepadText">メモ本文
+          <textarea id="notepadText" rows="18" placeholder="ここにメモを入力してください。"></textarea>
+        </label>
+        <div class="notepad-footer">
+          <p class="notepad-count" id="notepadCount" aria-live="polite">0文字・0行</p>
+          <p class="status-message" id="notepadStatus" role="status" aria-live="polite"></p>
+          <div class="button-row">
+            <button class="secondary-button" id="copyNotepadButton" type="button">コピー</button>
+            <button class="secondary-button" id="downloadNotepadButton" type="button">TXT保存</button>
+            <button class="danger-button" id="clearNotepadButton" type="button">すべて消去</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="character-count-view" id="characterCountView" aria-labelledby="characterCountTitle" hidden>
@@ -470,6 +595,257 @@
         </div>
       </div>
       <p class="status-message" id="composerStatus" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="neon-text-view" id="neonTextView" aria-labelledby="neonTextTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">NEON TEXT STUDIO</p>
+          <h2 id="neonTextTitle">ネオン風の文字・看板を生成</h2>
+          <p>文字、発光、背景、看板枠、点滅を調整し、画像・SVG・アニメーションで保存できます。</p>
+        </div>
+      </div>
+
+      <div class="neon-layout">
+        <aside class="neon-controls" aria-label="ネオン文字設定">
+          <div class="neon-panel-group">
+            <h3>文字</h3>
+            <label>表示する文字
+              <textarea id="neonTextInput" rows="4">NEON
+NIGHT</textarea>
+            </label>
+            <div class="form-grid two-column">
+              <label>プリセット
+                <select id="neonPreset">
+                  <option value="electric">エレクトリック</option>
+                  <option value="pink">ホットピンク</option>
+                  <option value="cyber">サイバー</option>
+                  <option value="sunset">サンセット</option>
+                  <option value="green">グリーン</option>
+                  <option value="gold">ゴールド</option>
+                </select>
+              </label>
+              <label>書体
+                <select id="neonFontFamily">
+                  <option value="sans">ゴシック</option>
+                  <option value="rounded">丸ゴシック</option>
+                  <option value="serif">明朝</option>
+                  <option value="monospace">等幅</option>
+                  <option value="cursive">筆記体</option>
+                </select>
+              </label>
+              <label>文字サイズ <span id="neonFontSizeValue">150px</span>
+                <input id="neonFontSize" type="range" min="24" max="320" step="1" value="150">
+              </label>
+              <label>太さ
+                <select id="neonFontWeight"><option value="400">標準</option><option value="700" selected>太字</option><option value="900">極太</option></select>
+              </label>
+              <label>文字間隔 <span id="neonLetterSpacingValue">4px</span>
+                <input id="neonLetterSpacing" type="range" min="-5" max="30" step="1" value="4">
+              </label>
+              <label>行間 <span id="neonLineHeightValue">1.15</span>
+                <input id="neonLineHeight" type="range" min="0.8" max="2" step="0.05" value="1.15">
+              </label>
+              <label>文字揃え
+                <select id="neonTextAlign"><option value="left">左</option><option value="center" selected>中央</option><option value="right">右</option></select>
+              </label>
+              <label>書字方向
+                <select id="neonWritingMode"><option value="horizontal">横書き</option><option value="vertical">縦書き</option></select>
+              </label>
+            </div>
+            <label class="checkbox-row"><input id="neonItalic" type="checkbox"><span>斜体にする</span></label>
+          </div>
+
+          <div class="neon-panel-group">
+            <h3>色と発光</h3>
+            <div class="form-grid two-column">
+              <label>ネオン色<input id="neonPrimaryColor" type="color" value="#4DEBFF"></label>
+              <label>グラデーション色<input id="neonSecondaryColor" type="color" value="#B84DFF"></label>
+            </div>
+            <label class="checkbox-row"><input id="neonGradientEnabled" type="checkbox" checked><span>2色グラデーション</span></label>
+            <label>発光の強さ <span id="neonGlowStrengthValue">78%</span>
+              <input id="neonGlowStrength" type="range" min="0" max="100" step="1" value="78">
+            </label>
+            <label>発光の広がり <span id="neonGlowSpreadValue">34px</span>
+              <input id="neonGlowSpread" type="range" min="0" max="80" step="1" value="34">
+            </label>
+            <label>ネオン管の太さ <span id="neonTubeWidthValue">7px</span>
+              <input id="neonTubeWidth" type="range" min="1" max="24" step="1" value="7">
+            </label>
+          </div>
+
+          <div class="neon-panel-group">
+            <h3>背景と看板</h3>
+            <div class="form-grid two-column">
+              <label>背景
+                <select id="neonBackgroundStyle">
+                  <option value="brick" selected>レンガ壁</option>
+                  <option value="wall">暗い壁</option>
+                  <option value="solid">単色</option>
+                  <option value="transparent">透明</option>
+                </select>
+              </label>
+              <label>背景色<input id="neonBackgroundColor" type="color" value="#090B16"></label>
+              <label>幅（px）<input id="neonCanvasWidth" type="number" min="160" max="4000" step="1" value="1200"></label>
+              <label>高さ（px）<input id="neonCanvasHeight" type="number" min="160" max="4000" step="1" value="800"></label>
+            </div>
+            <div>
+              <p class="neon-field-label">背景色プリセット</p>
+              <div class="neon-background-presets" role="group" aria-label="背景色プリセット">
+                <button class="neon-background-preset" type="button" data-neon-background-color="#090B16" aria-label="ミッドナイト" title="ミッドナイト"><span style="--preset-color:#090B16"></span>ミッドナイト</button>
+                <button class="neon-background-preset" type="button" data-neon-background-color="#000000" aria-label="ブラック" title="ブラック"><span style="--preset-color:#000000"></span>ブラック</button>
+                <button class="neon-background-preset" type="button" data-neon-background-color="#18181B" aria-label="チャコール" title="チャコール"><span style="--preset-color:#18181B"></span>チャコール</button>
+                <button class="neon-background-preset" type="button" data-neon-background-color="#1A0E12" aria-label="レンガ" title="レンガ"><span style="--preset-color:#1A0E12"></span>レンガ</button>
+                <button class="neon-background-preset" type="button" data-neon-background-color="#081426" aria-label="ネイビー" title="ネイビー"><span style="--preset-color:#081426"></span>ネイビー</button>
+                <button class="neon-background-preset" type="button" data-neon-background-color="#160A24" aria-label="パープル" title="パープル"><span style="--preset-color:#160A24"></span>パープル</button>
+                <button class="neon-background-preset" type="button" data-neon-background-color="#071A14" aria-label="フォレスト" title="フォレスト"><span style="--preset-color:#071A14"></span>フォレスト</button>
+                <button class="neon-background-preset" type="button" data-neon-background-color="#251507" aria-label="アンバー" title="アンバー"><span style="--preset-color:#251507"></span>アンバー</button>
+              </div>
+            </div>
+            <label class="checkbox-row"><input id="neonFrameEnabled" type="checkbox" checked><span>ネオン看板枠を付ける</span></label>
+            <label>枠の色<input id="neonFrameColor" type="color" value="#FF4DA6"></label>
+          </div>
+
+          <div class="neon-panel-group">
+            <h3>アニメーション</h3>
+            <label class="checkbox-row"><input id="neonFlickerEnabled" type="checkbox" checked><span>点滅プレビューを有効にする</span></label>
+            <label>点滅速度 <span id="neonFlickerSpeedValue">5</span>
+              <input id="neonFlickerSpeed" type="range" min="1" max="10" step="1" value="5">
+            </label>
+            <p class="helper-text">WebMとGIFは3秒間のループ用アニメーションとして生成します。</p>
+          </div>
+
+          <div class="neon-panel-group">
+            <h3>ネオン単体データ</h3>
+            <div class="neon-project-grid">
+              <button class="secondary-button" id="neonDownloadProject" type="button">設定JSONを保存</button>
+              <label class="secondary-button neon-project-file-button" for="neonProjectFileInput">
+                設定JSONを読込
+                <input id="neonProjectFileInput" type="file" accept="application/json,.json">
+              </label>
+            </div>
+            <p class="helper-text">文字・色・背景・点滅などの全設定を保存します。編集中の設定はこのブラウザにも自動保存されます。</p>
+          </div>
+
+          <div class="neon-panel-group">
+            <h3>保存・共有</h3>
+            <div class="neon-export-grid">
+              <button class="primary-button" id="neonDownloadPng" type="button">PNG</button>
+              <button class="secondary-button" id="neonDownloadWebp" type="button">WebP</button>
+              <button class="secondary-button" id="neonDownloadSvg" type="button">SVG</button>
+              <button class="secondary-button" id="neonDownloadWebm" type="button">WebM 3秒</button>
+              <button class="secondary-button" id="neonDownloadGif" type="button">GIF 3秒</button>
+              <button class="secondary-button" id="neonCopyCss" type="button">CSSをコピー</button>
+            </div>
+            <button class="secondary-button full-width" id="neonResetButton" type="button">設定をリセット</button>
+          </div>
+        </aside>
+
+        <div class="neon-preview-area">
+          <div class="neon-preview-toolbar">
+            <div>
+              <strong>ライブプレビュー</strong>
+              <span id="neonCanvasSizeLabel">1200 × 800 px</span>
+            </div>
+            <span class="neon-live-indicator" id="neonLiveIndicator">● LIVE</span>
+          </div>
+          <div class="neon-canvas-scroller">
+            <canvas id="neonCanvas" width="1200" height="800" aria-label="ネオン文字プレビュー"></canvas>
+          </div>
+          <label class="neon-css-label">生成CSS
+            <textarea id="neonCssOutput" rows="8" readonly></textarea>
+          </label>
+          <p class="helper-text">透明背景はPNG・WebP・SVGに反映されます。GIFは仕様上、背景色を使った不透明画像になります。</p>
+        </div>
+      </div>
+      <p class="status-message" id="neonStatus" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="settings-view" id="settingsView" aria-labelledby="settingsTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">SETTINGS</p>
+          <h2 id="settingsTitle">設定</h2>
+          <p>サイト全体の表示方法を変更します。</p>
+        </div>
+      </div>
+      <div class="settings-layout">
+        <div class="settings-card">
+          <h3>言語</h3>
+          <label for="languageSelect">表示言語
+            <select id="languageSelect">
+              <option value="ja">日本語</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <p class="helper-text">変更はすべての機能にすぐ反映され、このブラウザに保存されます。</p>
+          <p class="status-message" id="languageStatus" role="status" aria-live="polite"></p>
+        </div>
+        <div class="settings-card">
+          <h3>サイトデータ</h3>
+          <p>このサイトの各機能のデータをJSONファイルに保存し、あとから読み込めます。</p>
+          <div class="settings-data-actions" aria-label="サイトデータ管理">
+            <button class="secondary-button" id="downloadSiteDataButton" type="button">全データ保存</button>
+            <label class="secondary-button site-data-file-button" for="siteDataFileInput">
+              全データ読込
+              <input id="siteDataFileInput" type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <span class="site-data-status" id="siteDataStatus" role="status" aria-live="polite"></span>
+          <p class="helper-text">画像、配置、文章、カラー履歴、画像合成の操作履歴、ネオン設定、表示言語をまとめて保存します。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="holiday-countdown-view" id="holidayCountdownView" aria-labelledby="holidayCountdownTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">HOLIDAY COUNTDOWN</p>
+          <h2 id="holidayCountdownTitle">次の連休カウントダウン</h2>
+          <p>日本の土日・祝日・振替休日をもとに、次の3連休以上の期間を表示します。</p>
+        </div>
+      </div>
+      <div class="holiday-countdown-layout">
+        <div class="holiday-countdown-main" id="holidayCountdownMain"></div>
+        <aside class="holiday-countdown-info">
+          <h3>対象データ</h3>
+          <p>2026年から2030年までの日本の祝日・休日を内蔵しています。</p>
+          <p class="helper-text">春分の日・秋分の日は国立天文台の予測に基づきます。正式な日付は前年2月の官報で確定します。</p>
+          <a href="https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html" target="_blank" rel="noreferrer">内閣府の祝日情報 ↗</a>
+          <a href="https://www.nao.ac.jp/faq/a0301.html" target="_blank" rel="noreferrer">国立天文台の春分・秋分情報 ↗</a>
+        </aside>
+      </div>
+    </section>
+
+    <section class="wake-time-view" id="wakeTimeView" aria-labelledby="wakeTimeTitle" hidden>
+      <div class="feature-titlebar">
+        <div>
+          <p class="eyebrow">WAKE TIME RANDOMIZER</p>
+          <h2 id="wakeTimeTitle">明日の起床時間をランダムに決める</h2>
+          <p>起床時間の範囲を指定して、明日の起床時間を5分刻みでランダムに決定します。</p>
+        </div>
+      </div>
+      <div class="wake-time-layout">
+        <div class="wake-time-card">
+          <h3>起床時間の範囲</h3>
+          <div class="form-grid two-column">
+            <label for="wakeTimeStart">開始時刻
+              <input id="wakeTimeStart" type="time" value="06:00" step="300">
+            </label>
+            <label for="wakeTimeEnd">終了時刻
+              <input id="wakeTimeEnd" type="time" value="09:00" step="300">
+            </label>
+          </div>
+          <button class="primary-button full-width" id="randomizeWakeTimeButton" type="button">明日の時間を決める</button>
+          <p class="wake-time-error" id="wakeTimeError" role="alert" hidden></p>
+        </div>
+        <div class="wake-time-result" aria-live="polite">
+          <p class="wake-time-result-label" id="wakeTimeResultLabel">明日の起床時間</p>
+          <p class="wake-time-result-value" id="wakeTimeResultValue">--:--</p>
+          <p class="wake-time-result-date" id="wakeTimeResultDate">まだ決まっていません</p>
+        </div>
+      </div>
+      <p class="status-message" id="wakeTimeStatus" role="status" aria-live="polite"></p>
     </section>
   </main>
 </body>

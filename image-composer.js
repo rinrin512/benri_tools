@@ -508,6 +508,110 @@
     setStatus(`${state.canvasWidth} × ${state.canvasHeight}pxで保存しました。`);
   }
 
+  function exportSiteData() {
+    const assets = [];
+    const assetIndexes = new Map();
+    const serializeLayer = (layer) => {
+      let assetIndex = assetIndexes.get(layer.dataUrl);
+      if (assetIndex === undefined) {
+        assetIndex = assets.length;
+        assetIndexes.set(layer.dataUrl, assetIndex);
+        assets.push(layer.dataUrl);
+      }
+      return {
+        id: layer.id,
+        name: layer.name,
+        assetIndex,
+        x: layer.x,
+        y: layer.y,
+        width: layer.width,
+        height: layer.height,
+        rotation: layer.rotation,
+        opacity: layer.opacity,
+        sourceAspect: layer.sourceAspect,
+      };
+    };
+    const serializeSnapshot = (snapshot) => ({
+      canvasWidth: snapshot.canvasWidth,
+      canvasHeight: snapshot.canvasHeight,
+      transparent: snapshot.transparent,
+      backgroundColor: snapshot.backgroundColor,
+      layers: snapshot.layers.map(serializeLayer),
+      selectedId: snapshot.selectedId,
+      nextId: snapshot.nextId,
+    });
+    return {
+      assets,
+      current: serializeSnapshot(cloneSnapshot()),
+      history: state.history.map(serializeSnapshot),
+      historyIndex: state.historyIndex,
+      lockAspect: elements.lockAspect.checked,
+      outputFormat: elements.outputFormat.value,
+      quality: Number(elements.quality.value),
+    };
+  }
+
+  function safeNumber(value, fallback, minimum, maximum) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.min(maximum, Math.max(minimum, parsed)) : fallback;
+  }
+
+  function deserializeSnapshot(snapshot, assets) {
+    if (!snapshot || typeof snapshot !== "object" || !Array.isArray(snapshot.layers)) throw new Error("画像合成の状態が不正です");
+    const canvasWidth = Math.round(safeNumber(snapshot.canvasWidth, 1200, 1, 8000));
+    const canvasHeight = Math.round(safeNumber(snapshot.canvasHeight, 800, 1, 8000));
+    const layers = snapshot.layers.map((layer, index) => {
+      const asset = assets[Number(layer.assetIndex)];
+      if (!asset) throw new Error("画像合成の画像データが不足しています");
+      const sourceAspect = safeNumber(layer.sourceAspect, asset.image.naturalWidth / asset.image.naturalHeight, 0.000001, 1000000);
+      return {
+        id: Math.max(1, Math.round(safeNumber(layer.id, index + 1, 1, Number.MAX_SAFE_INTEGER))),
+        name: typeof layer.name === "string" ? layer.name.slice(0, 300) : `画像${index + 1}`,
+        image: asset.image,
+        dataUrl: asset.dataUrl,
+        x: safeNumber(layer.x, 0, -1000000, 1000000),
+        y: safeNumber(layer.y, 0, -1000000, 1000000),
+        width: safeNumber(layer.width, asset.image.naturalWidth, 1, 1000000),
+        height: safeNumber(layer.height, asset.image.naturalHeight, 1, 1000000),
+        rotation: safeNumber(layer.rotation, 0, -360000, 360000),
+        opacity: safeNumber(layer.opacity, 1, 0, 1),
+        sourceAspect,
+      };
+    });
+    const ids = new Set(layers.map((layer) => layer.id));
+    const selectedId = ids.has(Number(snapshot.selectedId)) ? Number(snapshot.selectedId) : layers.at(-1)?.id ?? null;
+    const maximumId = layers.reduce((maximum, layer) => Math.max(maximum, layer.id), 0);
+    return {
+      canvasWidth,
+      canvasHeight,
+      transparent: typeof snapshot.transparent === "boolean" ? snapshot.transparent : true,
+      backgroundColor: typeof snapshot.backgroundColor === "string" && /^#[0-9a-f]{6}$/i.test(snapshot.backgroundColor) ? snapshot.backgroundColor.toUpperCase() : "#FFFFFF",
+      layers,
+      selectedId,
+      nextId: Math.max(maximumId + 1, Math.round(safeNumber(snapshot.nextId, maximumId + 1, 1, Number.MAX_SAFE_INTEGER))),
+    };
+  }
+
+  async function importSiteData(data) {
+    if (!data || typeof data !== "object" || !Array.isArray(data.assets) || !data.current) throw new Error("画像合成データが不正です");
+    const assets = await Promise.all(data.assets.map((dataUrl, index) => {
+      if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/")) throw new Error(`画像合成の素材${index + 1}が不正です`);
+      return loadImageFromDataUrl(dataUrl, `素材${index + 1}`);
+    }));
+    const current = deserializeSnapshot(data.current, assets);
+    const history = Array.isArray(data.history) ? data.history.slice(-HISTORY_LIMIT).map((snapshot) => deserializeSnapshot(snapshot, assets)) : [];
+    restoreSnapshot(current);
+    state.history = history.length ? history : [current];
+    state.historyIndex = Math.round(safeNumber(data.historyIndex, state.history.length - 1, 0, state.history.length - 1));
+    elements.lockAspect.checked = typeof data.lockAspect === "boolean" ? data.lockAspect : true;
+    elements.outputFormat.value = ["png", "jpeg", "webp"].includes(data.outputFormat) ? data.outputFormat : "png";
+    elements.quality.value = String(Math.round(safeNumber(data.quality, 92, 10, 100)));
+    updateHistoryButtons();
+    updateQualityVisibility();
+    render();
+    setStatus("サイト全体バックアップから画像合成と操作履歴を復元しました。");
+  }
+
   elements.fileInput.addEventListener("change", (event) => {
     addFiles(event.target.files);
     event.target.value = "";
@@ -606,4 +710,5 @@
   commitHistory();
   updateQualityVisibility();
   render();
+  window.YaaSiteData?.register("imageComposer", { exportData: exportSiteData, importData: importSiteData });
 })();

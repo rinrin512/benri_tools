@@ -335,6 +335,73 @@
     }
   }
 
+  function sourceImageDataUrl() {
+    if (!state.image) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = state.image.naturalWidth;
+    canvas.height = state.image.naturalHeight;
+    canvas.getContext("2d").drawImage(state.image, 0, 0);
+    return canvas.toDataURL("image/png");
+  }
+
+  function exportSiteData() {
+    return {
+      imageDataUrl: sourceImageDataUrl(),
+      fileName: state.fileName,
+      crop: state.crop ? { ...state.crop } : null,
+      aspectRatio: elements.aspectRatio.value,
+      outputFormat: elements.outputFormat.value,
+      quality: Number(elements.quality.value),
+    };
+  }
+
+  function loadDataUrlImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("トリミング画像を復元できませんでした"));
+      image.src = dataUrl;
+    });
+  }
+
+  function clearImportedImage() {
+    state.image = null;
+    state.fileName = "";
+    state.crop = null;
+    elements.settings.hidden = true;
+    elements.placeholder.hidden = false;
+    elements.canvas.hidden = true;
+  }
+
+  async function importSiteData(data) {
+    if (!data || typeof data !== "object") throw new Error("トリミングデータが不正です");
+    if (!data.imageDataUrl) {
+      clearImportedImage();
+      return;
+    }
+    if (typeof data.imageDataUrl !== "string" || !data.imageDataUrl.startsWith("data:image/")) throw new Error("トリミング画像形式が不正です");
+    const image = await loadDataUrlImage(data.imageDataUrl);
+    state.image = image;
+    state.fileName = typeof data.fileName === "string" ? data.fileName.slice(0, 300) : "restored-image.png";
+    const sourceCrop = data.crop && typeof data.crop === "object" ? data.crop : {};
+    const x = clamp(Number(sourceCrop.x) || 0, 0, Math.max(0, image.naturalWidth - 1));
+    const y = clamp(Number(sourceCrop.y) || 0, 0, Math.max(0, image.naturalHeight - 1));
+    const width = clamp(Number(sourceCrop.width) || image.naturalWidth, 1, image.naturalWidth - x);
+    const height = clamp(Number(sourceCrop.height) || image.naturalHeight, 1, image.naturalHeight - y);
+    state.crop = { x, y, width, height };
+    elements.aspectRatio.value = [...elements.aspectRatio.options].some((option) => option.value === data.aspectRatio) ? data.aspectRatio : "free";
+    elements.outputFormat.value = ["png", "jpeg", "webp"].includes(data.outputFormat) ? data.outputFormat : "png";
+    elements.quality.value = String(clamp(Number(data.quality) || 92, 10, 100));
+    elements.fileName.textContent = `${state.fileName}（${image.naturalWidth} × ${image.naturalHeight}px）`;
+    elements.settings.hidden = false;
+    elements.placeholder.hidden = true;
+    elements.canvas.hidden = false;
+    syncInputs();
+    resizeCanvas();
+    updateQualityVisibility();
+    setStatus("サイト全体バックアップからトリミング状態を復元しました。");
+  }
+
   elements.fileInput.addEventListener("change", (event) => {
     const [file] = event.target.files;
     if (file) loadImage(file);
@@ -367,4 +434,5 @@
     if (event.detail.view === "cropper") requestAnimationFrame(resizeCanvas);
   });
   updateQualityVisibility();
+  window.YaaSiteData?.register("imageCropper", { exportData: exportSiteData, importData: importSiteData });
 })();

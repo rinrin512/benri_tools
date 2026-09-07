@@ -211,6 +211,79 @@
     }
   }
 
+  function normalizedColor(value) {
+    if (!value || typeof value !== "object") return null;
+    const components = [value.red, value.green, value.blue, value.alpha].map(Number);
+    if (components.some((component) => !Number.isFinite(component))) return null;
+    const [red, green, blue, alpha] = components.map((component) => Math.round(Math.min(255, Math.max(0, component))));
+    return {
+      red,
+      green,
+      blue,
+      alpha,
+      hex: rgbToHex(red, green, blue),
+      x: Number.isFinite(Number(value.x)) ? Number(value.x) : Number.NaN,
+      y: Number.isFinite(Number(value.y)) ? Number(value.y) : Number.NaN,
+    };
+  }
+
+  function exportSiteData() {
+    return {
+      imageDataUrl: state.image ? elements.canvas.toDataURL("image/png") : null,
+      fileName: state.fileName,
+      selectedColor: state.selectedColor ? { ...state.selectedColor } : null,
+      history: state.history.map((color) => ({ ...color })),
+    };
+  }
+
+  function loadDataUrlImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("カラー抽出画像を復元できませんでした"));
+      image.src = dataUrl;
+    });
+  }
+
+  async function importSiteData(data) {
+    if (!data || typeof data !== "object") throw new Error("カラー抽出データが不正です");
+    const history = Array.isArray(data.history) ? data.history.map(normalizedColor).filter(Boolean).slice(0, HISTORY_LIMIT) : [];
+    const selectedColor = normalizedColor(data.selectedColor);
+    state.history = history;
+    state.selectedColor = selectedColor;
+    if (!data.imageDataUrl) {
+      state.image = null;
+      state.fileName = "";
+      elements.result.hidden = true;
+      elements.placeholder.hidden = false;
+      elements.canvas.hidden = true;
+      hideMagnifier();
+      renderHistory();
+      return;
+    }
+    if (typeof data.imageDataUrl !== "string" || !data.imageDataUrl.startsWith("data:image/")) throw new Error("カラー抽出画像形式が不正です");
+    const image = await loadDataUrlImage(data.imageDataUrl);
+    state.image = image;
+    state.fileName = typeof data.fileName === "string" ? data.fileName.slice(0, 300) : "restored-image.png";
+    elements.canvas.width = image.naturalWidth;
+    elements.canvas.height = image.naturalHeight;
+    elements.canvas.getContext("2d", { willReadFrequently: true }).drawImage(image, 0, 0);
+    elements.fileName.textContent = `${state.fileName}（${image.naturalWidth} × ${image.naturalHeight}px）`;
+    elements.result.hidden = false;
+    elements.placeholder.hidden = true;
+    elements.canvas.hidden = false;
+    hideMagnifier();
+    renderHistory();
+    if (selectedColor) displayColor(selectedColor, false);
+    else {
+      elements.hex.value = "#000000";
+      elements.swatch.style.backgroundColor = "#000000";
+      elements.details.textContent = "画像をクリックして色を選択してください。";
+      elements.copyButton.disabled = true;
+    }
+    setStatus("サイト全体バックアップからカラー抽出状態を復元しました。");
+  }
+
   elements.fileInput.addEventListener("change", (event) => {
     const [file] = event.target.files;
     if (file) loadImage(file);
@@ -241,4 +314,5 @@
     const color = state.history.find((entry) => entry.hex === button.dataset.hex);
     if (color) displayColor({ ...color, x: Number.NaN, y: Number.NaN }, false);
   });
+  window.YaaSiteData?.register("imageColorPicker", { exportData: exportSiteData, importData: importSiteData });
 })();

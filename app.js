@@ -28,21 +28,40 @@
 
   const elements = {
     homeView: document.querySelector("#homeView"),
+    homeIntro: document.querySelector("#homeIntro"),
+    categorySelector: document.querySelector("#categorySelector"),
+    lifeCategory: document.querySelector("#lifeCategory"),
+    productivityCategory: document.querySelector("#productivityCategory"),
+    showLifeCategoryButton: document.querySelector("#showLifeCategoryButton"),
+    showProductivityCategoryButton: document.querySelector("#showProductivityCategoryButton"),
     printFeatureView: document.querySelector("#printFeatureView"),
     characterCountView: document.querySelector("#characterCountView"),
+    md5View: document.querySelector("#md5View"),
+    notepadView: document.querySelector("#notepadView"),
     cursiveView: document.querySelector("#cursiveView"),
     converterView: document.querySelector("#converterView"),
     cropperView: document.querySelector("#cropperView"),
     colorPickerView: document.querySelector("#colorPickerView"),
     composerView: document.querySelector("#composerView"),
+    neonTextView: document.querySelector("#neonTextView"),
+    holidayCountdownView: document.querySelector("#holidayCountdownView"),
+    wakeTimeView: document.querySelector("#wakeTimeView"),
+    settingsView: document.querySelector("#settingsView"),
     homeButton: document.querySelector("#homeButton"),
     openPrintButton: document.querySelector("#openPrintButton"),
     openCharacterCountButton: document.querySelector("#openCharacterCountButton"),
+    openMd5Button: document.querySelector("#openMd5Button"),
+    openNotepadButton: document.querySelector("#openNotepadButton"),
     openCursiveButton: document.querySelector("#openCursiveButton"),
+    openCursiveLifeButton: document.querySelector("#openCursiveLifeButton"),
     openConverterButton: document.querySelector("#openConverterButton"),
     openCropperButton: document.querySelector("#openCropperButton"),
     openColorPickerButton: document.querySelector("#openColorPickerButton"),
     openComposerButton: document.querySelector("#openComposerButton"),
+    openNeonTextButton: document.querySelector("#openNeonTextButton"),
+    openHolidayCountdownButton: document.querySelector("#openHolidayCountdownButton"),
+    openWakeTimeButton: document.querySelector("#openWakeTimeButton"),
+    openSettingsButton: document.querySelector("#openSettingsButton"),
     dropZone: document.querySelector("#dropZone"),
     fileInput: document.querySelector("#fileInput"),
     fileStatus: document.querySelector("#fileStatus"),
@@ -195,21 +214,48 @@
     elements.homeView.hidden = !isHome;
     elements.printFeatureView.hidden = !isPrint;
     elements.characterCountView.hidden = view !== "characterCount";
+    elements.md5View.hidden = view !== "md5";
+    elements.notepadView.hidden = view !== "notepad";
     elements.cursiveView.hidden = view !== "cursive";
     elements.converterView.hidden = view !== "converter";
     elements.cropperView.hidden = view !== "cropper";
     elements.colorPickerView.hidden = view !== "colorPicker";
     elements.composerView.hidden = view !== "composer";
+    elements.neonTextView.hidden = view !== "neonText";
+    elements.settingsView.hidden = view !== "settings";
+    elements.holidayCountdownView.hidden = view !== "holidayCountdown";
+    elements.wakeTimeView.hidden = view !== "wakeTime";
     elements.homeButton.hidden = isHome;
     if (isHome) document.title = "yaa-site | 便利ツール";
     if (isPrint) document.title = "actual-size-print | 実寸画像印刷";
     if (view === "characterCount") document.title = "yaa-site | 文字数カウント";
+    if (view === "md5") document.title = "yaa-site | MD5ハッシュ生成";
+    if (view === "notepad") document.title = "yaa-site | メモ帳";
     if (view === "cursive") document.title = "yaa-site | 英語筆記体変換";
     if (view === "converter") document.title = "yaa-site | ファイル形式変換";
     if (view === "cropper") document.title = "yaa-site | 画像トリミング";
     if (view === "colorPicker") document.title = "yaa-site | 画像カラー抽出";
     if (view === "composer") document.title = "yaa-site | 画像合成・編集";
+    if (view === "neonText") document.title = "yaa-site | ネオン文字生成";
+    if (view === "settings") document.title = "yaa-site | 設定";
+    if (view === "holidayCountdown") document.title = "yaa-site | 次の連休カウントダウン";
+    if (view === "wakeTime") document.title = "yaa-site | 明日の起床時間";
+    window.YaaI18n?.refresh();
     window.dispatchEvent(new CustomEvent("yaa:viewchange", { detail: { view } }));
+  }
+
+  function showHomeCategory(category) {
+    const isCategoryPage = category === "life" || category === "productivity";
+    elements.homeIntro.hidden = isCategoryPage;
+    elements.categorySelector.hidden = isCategoryPage;
+    elements.lifeCategory.hidden = category !== "life";
+    elements.productivityCategory.hidden = category !== "productivity";
+    elements.homeButton.hidden = !isCategoryPage;
+    elements.homeView.classList.toggle("is-category-page", isCategoryPage);
+    if (category === "life") document.title = "yaa-site | 生活機能";
+    if (category === "productivity") document.title = "yaa-site | 効率化機能";
+    if (!isCategoryPage) document.title = "yaa-site | 便利ツール";
+    window.YaaI18n?.refresh();
   }
 
   function updateCharacterCount() {
@@ -736,6 +782,140 @@
     setStatus("PDFを生成しました。印刷時は「実際のサイズ」または倍率100%を選択してください。");
   }
 
+  function safeSiteNumber(value, fallback, minimum, maximum) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.min(maximum, Math.max(minimum, parsed)) : fallback;
+  }
+
+  function exportConverterData() {
+    if (!state.converterFile) return null;
+    const converter = state.converterFile;
+    return {
+      name: converter.file.name,
+      kind: converter.kind,
+      dataUrl: converter.kind === "image" ? converter.dataUrl : undefined,
+      text: converter.kind === "text" ? converter.text : undefined,
+      format: converter.format,
+      width: converter.width,
+      height: converter.height,
+      outputFormat: elements.converterOutputFormat.value,
+    };
+  }
+
+  function exportSiteData() {
+    return {
+      print: {
+        items: state.items.map((item) => ({ ...item })),
+        selectedId: state.selectedId,
+        nextId: state.nextId,
+        paperKey: state.paperKey,
+        orientation: state.orientation,
+        correction: {
+          specified: state.correction.specified,
+          measured: state.correction.measured,
+          enabled: state.correction.enabled,
+        },
+        lockAspect: elements.lockAspect.checked,
+        copyCount: elements.copyCount.value,
+      },
+      characterText: elements.characterText.value,
+      cursiveText: elements.cursiveInput.value,
+      converter: exportConverterData(),
+    };
+  }
+
+  function normalizePrintItem(item, index) {
+    if (!item || typeof item !== "object" || typeof item.dataUrl !== "string" || !item.dataUrl.startsWith("data:image/")) {
+      throw new Error(`実寸印刷の画像${index + 1}が不正です`);
+    }
+    const aspectRatio = safeSiteNumber(item.aspectRatio, 1, 0.000001, 1000000);
+    return {
+      id: Math.max(1, Math.round(safeSiteNumber(item.id, index + 1, 1, Number.MAX_SAFE_INTEGER))),
+      name: typeof item.name === "string" ? item.name.slice(0, 300) : `画像${index + 1}`,
+      dataUrl: item.dataUrl,
+      format: ["PNG", "JPEG", "WEBP"].includes(item.format) ? item.format : "PNG",
+      aspectRatio,
+      widthMm: safeSiteNumber(item.widthMm, 50, 0.01, 100000),
+      heightMm: safeSiteNumber(item.heightMm, 50 / aspectRatio, 0.01, 100000),
+      xMm: safeSiteNumber(item.xMm, 0, -100000, 100000),
+      yMm: safeSiteNumber(item.yMm, 0, -100000, 100000),
+    };
+  }
+
+  function restoreConverterData(converter) {
+    if (!converter) {
+      state.converterFile = null;
+      elements.converterFileName.textContent = "ファイルが選択されていません。";
+      elements.converterFileMeta.textContent = "";
+      elements.converterOutputFormat.replaceChildren();
+      elements.converterOutputFormat.disabled = true;
+      elements.converterDownloadButton.disabled = true;
+      elements.converterStatus.textContent = "";
+      return;
+    }
+    if (converter.kind === "image") {
+      if (typeof converter.dataUrl !== "string" || !converter.dataUrl.startsWith("data:image/")) throw new Error("形式変換の画像データが不正です");
+      const width = Math.round(safeSiteNumber(converter.width, 1, 1, 100000));
+      const height = Math.round(safeSiteNumber(converter.height, 1, 1, 100000));
+      state.converterFile = {
+        file: { name: typeof converter.name === "string" ? converter.name.slice(0, 300) : "restored-image.png" },
+        kind: "image",
+        dataUrl: converter.dataUrl,
+        format: typeof converter.format === "string" ? converter.format : "PNG",
+        width,
+        height,
+      };
+      elements.converterFileMeta.textContent = `${width} × ${height}px。PNG / JPG / WebPへ変換できます。`;
+    } else if (converter.kind === "text") {
+      state.converterFile = {
+        file: { name: typeof converter.name === "string" ? converter.name.slice(0, 300) : "restored-text.txt" },
+        kind: "text",
+        text: typeof converter.text === "string" ? converter.text : "",
+      };
+      elements.converterFileMeta.textContent = "TXT / HTML / JSONへ変換できます。文字コードはUTF-8として読み込みます。";
+    } else throw new Error("形式変換データの種類が不正です");
+    setConverterOptions(state.converterFile.kind);
+    const allowedOutput = state.converterFile.kind === "image" ? ["png", "jpeg", "webp"] : ["txt", "html", "json"];
+    elements.converterOutputFormat.value = allowedOutput.includes(converter.outputFormat) ? converter.outputFormat : allowedOutput[0];
+    elements.converterFileName.textContent = state.converterFile.file.name;
+    elements.converterStatus.textContent = "サイト全体バックアップから変換元を復元しました。";
+    elements.converterStatus.style.color = "#067647";
+  }
+
+  function importSiteData(data) {
+    if (!data || typeof data !== "object" || !data.print || typeof data.print !== "object") throw new Error("基本機能データが不正です");
+    const print = data.print;
+    const items = Array.isArray(print.items) ? print.items.map(normalizePrintItem) : [];
+    state.items = items;
+    const itemIds = new Set(items.map((item) => item.id));
+    state.selectedId = itemIds.has(Number(print.selectedId)) ? Number(print.selectedId) : items.at(-1)?.id ?? null;
+    const maximumId = items.reduce((maximum, item) => Math.max(maximum, item.id), 0);
+    state.nextId = Math.max(maximumId + 1, Math.round(safeSiteNumber(print.nextId, maximumId + 1, 1, Number.MAX_SAFE_INTEGER)));
+    state.paperKey = Object.hasOwn(PAPER_SIZES, print.paperKey) ? print.paperKey : "a4";
+    state.orientation = ["portrait", "landscape"].includes(print.orientation) ? print.orientation : "portrait";
+    const correction = print.correction && typeof print.correction === "object" ? print.correction : {};
+    state.correction.specified = typeof correction.specified === "string" ? correction.specified : "";
+    state.correction.measured = typeof correction.measured === "string" ? correction.measured : "";
+    state.correction.enabled = Boolean(correction.enabled);
+    state.correction.interacted = state.correction.enabled || Boolean(state.correction.specified || state.correction.measured);
+    elements.paperSize.value = state.paperKey;
+    elements.orientation.value = state.orientation;
+    elements.correctionSpecifiedInput.value = state.correction.specified;
+    elements.correctionMeasuredInput.value = state.correction.measured;
+    elements.correctionEnabled.checked = state.correction.enabled;
+    elements.lockAspect.checked = typeof print.lockAspect === "boolean" ? print.lockAspect : true;
+    elements.copyCount.value = String(Math.round(safeSiteNumber(print.copyCount, 1, 1, 100)));
+    elements.characterText.value = typeof data.characterText === "string" ? data.characterText.slice(0, 5000000) : "";
+    elements.cursiveInput.value = typeof data.cursiveText === "string" ? data.cursiveText.slice(0, 5000000) : "";
+    restoreConverterData(data.converter);
+    validateCorrection(false);
+    saveCorrection();
+    updateCharacterCount();
+    updateCursiveOutput();
+    render();
+    setStatus("サイト全体バックアップから実寸印刷と文章データを復元しました。");
+  }
+
   elements.fileInput.addEventListener("change", (event) => {
     addFiles(event.target.files);
     event.target.value = "";
@@ -797,12 +977,21 @@
   elements.downloadButton.addEventListener("click", generatePdf);
   elements.openPrintButton.addEventListener("click", () => showView("print"));
   elements.openCharacterCountButton.addEventListener("click", () => showView("characterCount"));
+  elements.openMd5Button.addEventListener("click", () => showView("md5"));
+  elements.openNotepadButton.addEventListener("click", () => showView("notepad"));
   elements.openCursiveButton.addEventListener("click", () => showView("cursive"));
+  elements.openCursiveLifeButton.addEventListener("click", () => showView("cursive"));
   elements.openConverterButton.addEventListener("click", () => showView("converter"));
   elements.openCropperButton.addEventListener("click", () => showView("cropper"));
   elements.openColorPickerButton.addEventListener("click", () => showView("colorPicker"));
   elements.openComposerButton.addEventListener("click", () => showView("composer"));
-  elements.homeButton.addEventListener("click", () => showView("home"));
+  elements.openNeonTextButton.addEventListener("click", () => showView("neonText"));
+  elements.openHolidayCountdownButton.addEventListener("click", () => showView("holidayCountdown"));
+  elements.openWakeTimeButton.addEventListener("click", () => showView("wakeTime"));
+  elements.openSettingsButton.addEventListener("click", () => showView("settings"));
+  elements.showLifeCategoryButton.addEventListener("click", () => showHomeCategory("life"));
+  elements.showProductivityCategoryButton.addEventListener("click", () => showHomeCategory("productivity"));
+  elements.homeButton.addEventListener("click", () => { showView("home"); showHomeCategory(null); });
   elements.characterText.addEventListener("input", updateCharacterCount);
   elements.cursiveInput.addEventListener("input", updateCursiveOutput);
   elements.copyCursiveButton.addEventListener("click", copyCursiveOutput);
@@ -835,4 +1024,6 @@
   updateCharacterCount();
   updateCursiveOutput();
   showView("home");
+  showHomeCategory(null);
+  window.YaaSiteData?.register("coreTools", { exportData: exportSiteData, importData: importSiteData });
 })();
